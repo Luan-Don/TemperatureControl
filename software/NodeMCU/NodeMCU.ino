@@ -1,4 +1,4 @@
-
+ 
 /*************************************************************
   Download latest Blynk library here:
     https://github.com/blynkkk/blynk-library/releases/latest
@@ -47,7 +47,7 @@
 
 #include <ESP8266WiFi.h>
 //#include <Blynk.h>
-#include <BlynkExampleEsp8266.h>
+#include <BlynkSimpleEsp8266.h> 
 //#include <BlynkEdgent.h>
 
 // You should get Auth Token in the Blynk App.
@@ -56,17 +56,16 @@ char auth[] = "QmZ0ozni5rHRDzknAr6cT6kGkhPQRmm8";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "Truc Mai 3";
-char pass[] = "10031953456";
-int Temp;
+char ssid[] = "275/18";
+char pass[] = "11223344";
 int aboveThres;
 int belowThres;
 uint8_t u8aboveThres, u8belowThres;
-
+int Hot, Cool, Cold, Temp;
 void setup()
 {
   // Debug console
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Blynk.begin(auth, ssid, pass);
   // You can also specify server:
@@ -85,13 +84,23 @@ BLYNK_WRITE(V2) {
 void loop()
 {
   Blynk.run();
-  Serial.println(aboveThres | 0x00000100);
-  Serial.println(belowThres | 0x00000100);
-  if (Serial.available()) {
+
+ //Transmit Threshold from nodeMCU to ATMega
+  Serial.println(aboveThres);
+  Serial.println(belowThres);
+
+  //Recieve Current Tempurature from ATMega
+  if (Serial.available()>0)
+  {
     Temp = Serial.read();
   }
-  Blynk.virtualWrite(V0, Temp); // Truyen len Blynk
-  if (Temp >= aboveThres){
+   int testtemp = 0;
+   testtemp = Temp;
+  // Transmit Current Tempurature to Blynk
+  Blynk.virtualWrite(V3, testtemp);
+  
+  //Compare Curren Tempurature with Threshold
+  if (Temp > aboveThres){
     Hot = 1;
     Cold = 0;
     Cool = 0;
@@ -99,15 +108,7 @@ void loop()
     Blynk.virtualWrite(V5, Cold);
     Blynk.virtualWrite(V6, Cool);
   }
-  if (belowThres < Temp &&  Temp < aboveThres) {
-    Hot = 0;
-    Cold = 0;
-    Cool = 1;
-    Blynk.virtualWrite(V4, Hot);
-    Blynk.virtualWrite(V5, Cold);
-    Blynk.virtualWrite(V6, Cool);
-  }
-    if(Temp <= belowThres){
+   if (belowThres < Temp &&  Temp < aboveThres) {
     Hot = 0;
     Cold = 0;
     Cool = 1;
@@ -116,4 +117,14 @@ void loop()
     Blynk.virtualWrite(V6, Cool);
   }
   
+
+    if(Temp < belowThres){
+    Hot = 0;
+    Cold = 0;
+    Cool = 1;
+    Blynk.virtualWrite(V4, Hot);
+    Blynk.virtualWrite(V5, Cold);
+    Blynk.virtualWrite(V6, Cool);
+  }
+   
 }
