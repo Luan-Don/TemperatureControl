@@ -36,11 +36,6 @@
 #define HOT				1
 #define COLD			2
 #define COOL			3
-// Define baud rate
-#define USART0_BAUD         9600ul
-#define USART0_UBBR_VALUE   ((F_CPU/(USART0_BAUD<<4))-1)
-
-
 
 void Init_IO() {
 	// LED & Buzzer
@@ -100,24 +95,25 @@ uint16_t ADC_u16GetSample(void) {
 	// Return sampled value
 	return ADC;
 }
-
-void USART0_vInit(void)
-{
-	// Set baud rate
-	UBRR0H = (uint8_t)(USART0_UBBR_VALUE>>8);
-	UBRR0L = (uint8_t)USART0_UBBR_VALUE;
-
-	// Set frame format to 8 data bits, no parity, 1 stop bit
-	UCSR0C = (0<<USBS)|(1<<UCSZ1)|(1<<UCSZ0);
-
-	// Enable receiver and transmitter
-	UCSR0B = (1<<RXEN)|(1<<TXEN)|(1<<RXCIE);
+//void Init_Interrupt() {
+//	DDRD &= ~((1 << PD0) | (1 << PD1)); 	 // PD0,PD1 as Input
+//	PORTD |= (1 << PD0) | (1 << PD1);	   	// Pull up res
+//	EICRA |= (1 << ISC01) | (1 << ISC11);  // Falling edge
+//	EIMSK |= (1 << INT0) | (1 << INT1);   // Enable interrupt
+//
+//}
+void Init_USART(){
+	UBRR1H = 0;
+	UBRR1L = 47; // UBBR1 = 47, baud rate = 9600, F_CPU = 7372800UL
+	UCSR1A = 0x00; // UART mode asynochronous
+	UCSR1B |= (1<<RXCIE1)|(1<<RXEN1)|(1<<TXEN1); // Enable recerver interrupt, enable receiver and transmitter
+	UCSR1B |= (1<<UCSZ12);
+	UCSR1C |= (1<<UMSEL1)|(1<<UCSZ11)|(1<<UCSZ10); // Receiver 9 bit , no parity bit, 1 stop bit
 }
-
 void USART_tx(uint8_t temp){	// Receive data from NodeMCU
-	while(bit_is_clear(UCSR0A,UDRE1)){};
-	UCSR0B = (1<<TXB81);
-	UDR0 = temp;
+	while(bit_is_clear(UCSR1A,UDRE1)){};
+	UCSR1B = (1<<TXB81);
+	UDR1 = temp;
 }
 
 int aboveThreshold = 35;
@@ -193,10 +189,18 @@ int main(void) {
 	}
 }
 
-
-ISR(USART0_RX_vect){
-	uint8_t temp = UDR0;
-	if(bit_is_set(UCSR0B,RXB81)){
+//ISR(INT0_vect) {
+//	aboveThreshold += 1;
+//	belowThreshold += 1;
+//}
+//
+//ISR(INT1_vect) {
+//	aboveThreshold -= 1;
+//	belowThreshold -= 1;
+//}
+ISR(USART1_RX_vect){
+	uint8_t temp = UDR1;
+	if(bit_is_set(UCSR1B,RXB81)){
 		aboveThreshold = temp;
 	}else{
 		belowThreshold = temp;
