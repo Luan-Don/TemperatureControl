@@ -36,13 +36,20 @@
 #define HOT				1
 #define COLD			2
 #define COOL			3
+// Define baud rate
+#define USART0_BAUD         115200ul
+#define USART0_UBBR_VALUE   ((F_CPU/(USART0_BAUD<<4))-1)
+
+
 
 void Init_IO() {
 	// LED & Buzzer
 	DDR_LED_O |= (1 << BIT_LED_O);
 	DDR_BUZ |= (1 << BIT_BUZ);
+	PORT_BUZ |= (1 << BIT_BUZ);
 	// LED warning
 	DDR_WARNING |= (1<<HOT)|(1<<COLD)|(1<<COOL);
+
 }
 
 void TMR_vInit(void) {
@@ -95,33 +102,44 @@ uint16_t ADC_u16GetSample(void) {
 	// Return sampled value
 	return ADC;
 }
-//void Init_Interrupt() {
-//	DDRD &= ~((1 << PD0) | (1 << PD1)); 	 // PD0,PD1 as Input
-//	PORTD |= (1 << PD0) | (1 << PD1);	   	// Pull up res
-//	EICRA |= (1 << ISC01) | (1 << ISC11);  // Falling edge
-//	EIMSK |= (1 << INT0) | (1 << INT1);   // Enable interrupt
-//
-//}
-void Init_USART(){
-	UBRR1H = 0;
-	UBRR1L = 47; // UBBR1 = 47, baud rate = 9600, F_CPU = 7372800UL
-	UCSR1A = 0x00; // UART mode asynochronous
-	UCSR1B |= (1<<RXCIE1)|(1<<RXEN1)|(1<<TXEN1); // Enable recerver interrupt, enable receiver and transmitter
-	UCSR1B |= (1<<UCSZ12);
-	UCSR1C |= (1<<UMSEL1)|(1<<UCSZ11)|(1<<UCSZ10); // Receiver 9 bit , no parity bit, 1 stop bit
+
+void USART0_vInit(void)
+{
+	// Set baud rate
+	UBRR0H = (uint8_t)(USART0_UBBR_VALUE>>8);
+	UBRR0L = (uint8_t)USART0_UBBR_VALUE;
+
+	// Set frame format to 8 data bits, no parity, 1 stop bit
+	UCSR0C = (0<<USBS)|(1<<UCSZ1)|(1<<UCSZ0);
+
+	// Enable receiver and transmitter
+	UCSR0B = (1<<RXEN)|(1<<TXEN)|(1<<RXCIE);
 }
-void USART_tx(uint8_t temp){	// Receive data from NodeMCU
-	while(bit_is_clear(UCSR1A,UDRE1)){};
-	UCSR1B = (1<<TXB81);
-	UDR1 = temp;
+
+void USART_tx(uint8_t temp){	// Transmit data to NodeMCU
+	while(bit_is_clear(UCSR0A,UDRE0)){};
+
+	UDR0 = temp;
+}
+uint8_t USART_rx()
+{
+	// Wait until a byte has been received
+	while((UCSR0A&(1<<RXC0)) == 0)
+	{
+		;
+	}
+
+	// Return received data
+	return UDR0;
 }
 
 int aboveThreshold = 35;
 int belowThreshold = 20;
 
+
 int main(void) {
-	uint16_t u16AdcValue;
-	int Temperature;
+	//uint16_t u16AdcValue;
+	int Temperature = 25;
 	// Initialise Interrupt
 	// Init_Interrupt();
 	sei();
@@ -133,25 +151,25 @@ int main(void) {
 	TMR_vInit();
 
 	// Initialise ADC
-	ADC_vInit();
+	//ADC_vInit();
 
 	// Initialise LCD
 	init_LCD();
 	clr_LCD();
 
 	// Initialise USART
-	Init_USART();
+	USART0_vInit();
 	// Repeat indefinitely
 	for (;;) {
 		// Retrieve a sample
-		u16AdcValue = ADC_u16GetSample();
+		//u16AdcValue = ADC_u16GetSample();
 
 		// Calculate voltage
-		Temperature = (int) ((u16AdcValue / 1023) * 5 * 100 - 5);
+		//Temperature = (int) ((u16AdcValue / 1023) * 5 * 100);
 
 		// Display LCD
 		move_LCD(1, 1);
-		printf_LCD("Temperature:%dV", Temperature);
+		printf_LCD("Temperature:%d", Temperature);
 		move_LCD(2, 1);
 		printf_LCD("Threshold:%d-%d", belowThreshold, aboveThreshold);
 
@@ -168,7 +186,11 @@ int main(void) {
 			PORT_BUZ |= (1 << BIT_BUZ);   // Wait 400 milisecond
 			TMR_vDelay(400);
 		}
-		if (Temperature > belowThreshold) {
+		if(Temperature > belowThreshold && Temperature < aboveThreshold){
+				// Cool temperature warning
+				PORT_WARNING |= (1<<COOL);
+			}
+		if (Temperature < belowThreshold) {
 			// Cold temperature warning
 			PORT_WARNING |= (1<<COLD);
 			PORT_LED_O |= (1 << BIT_LED_O);
@@ -178,31 +200,25 @@ int main(void) {
 			PORT_BUZ |= (1 << BIT_BUZ);   // Wait 700 milisecond
 			TMR_vDelay(700);
 		}
-		if(Temperature > belowThreshold && Temperature < aboveThreshold){
-			// Hot temperature warning
-			PORT_WARNING |= (1<<COOL);
-		}
+
 		// USART transmits current temperature to NodeMCU
 		USART_tx(Temperature);
 		// Wait 1 second
 		TMR_vDelay(1000);
+
+//		USART_tx(belowThreshold);
+//		TMR_vDelay(1000);
+//		USART_tx(aboveThreshold);
+//		TMR_vDelay(1000);
 	}
 }
 
-//ISR(INT0_vect) {
-//	aboveThreshold += 1;
-//	belowThreshold += 1;
+// USART recieve Threshold from NodeMCU
+//ISR(USART0_RX_vect){
+//	uint8_t thr = USART_rx();
+//	if(thr){
+//		aboveThreshold = thr;
+//	}else{
+//		belowThreshold = thr;
+//	}
 //}
-//
-//ISR(INT1_vect) {
-//	aboveThreshold -= 1;
-//	belowThreshold -= 1;
-//}
-ISR(USART1_RX_vect){
-	uint8_t temp = UDR1;
-	if(bit_is_set(UCSR1B,RXB81)){
-		aboveThreshold = temp;
-	}else{
-		belowThreshold = temp;
-	}
-}
