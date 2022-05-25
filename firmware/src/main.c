@@ -35,7 +35,7 @@
 #define USART0_BAUD         115200ul
 #define USART0_UBBR_VALUE   ((F_CPU/(USART0_BAUD<<4))-1)
 
-uint8_t rx_data[2]= {0};
+uint8_t rx_data[2] = { 0 };
 
 void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength);
 void USART0_Flush(void);
@@ -46,7 +46,7 @@ void Init_IO() {
 	DDR_BUZ |= (1 << BIT_BUZ);
 	PORT_BUZ |= (1 << BIT_BUZ);
 	// LED warning
-	DDR_WARNING |= (1<<HOT)|(1<<COLD)|(1<<COOL);
+	DDR_WARNING |= (1 << HOT) | (1 << COLD) | (1 << COOL);
 
 }
 
@@ -101,40 +101,34 @@ uint16_t ADC_u16GetSample(void) {
 	return ADC;
 }
 
-void USART0_vInit(void)
-{
+void USART0_vInit(void) {
 	// Set baud rate
-	UBRR0H = (uint8_t)(USART0_UBBR_VALUE>>8);
-	UBRR0L = (uint8_t)USART0_UBBR_VALUE;
+	UBRR0H = (uint8_t) (USART0_UBBR_VALUE >> 8);
+	UBRR0L = (uint8_t) USART0_UBBR_VALUE;
 
 	// Set frame format to 8 data bits, no parity, 1 stop bit
-	UCSR0C = (0<<USBS)|(1<<UCSZ1)|(1<<UCSZ0);
+	UCSR0C = (0 << USBS) | (1 << UCSZ1) | (1 << UCSZ0);
 
 	// Enable receiver and transmitter
-	UCSR0B = (1<<RXEN)|(1<<TXEN)|(1<<RXCIE);
+	UCSR0B = (1 << RXEN) | (1 << TXEN) | (1 << RXCIE);
 }
 
-
-void USART0_vSendByte(uint8_t u8Data)
-{
-    // Wait if a byte is being transmitted
-    while ((UCSR0A & (1 << UDRE0)) == 0)
-    {
-        ;
-    }
-    // Transmit data
-    UDR0 = u8Data;
+void USART0_vSendByte(uint8_t u8Data) {
+	// Wait if a byte is being transmitted
+	while ((UCSR0A & (1 << UDRE0)) == 0) {
+		;
+	}
+	// Transmit data
+	UDR0 = u8Data;
 }
 
-uint8_t USART0_vReceiveByte(void)
-{
-    // Wait until a byte has been received
-    while ((UCSR0A & (1 << RXC0)) == 0)
-    {
-        ;
-    }
-    // Return received data
-    return UDR0;
+uint8_t USART0_vReceiveByte(void) {
+	// Wait until a byte has been received
+	while ((UCSR0A & (1 << RXC0)) == 0) {
+		;
+	}
+	// Return received data
+	return UDR0;
 }
 
 uint8_t aboveThreshold = 35;
@@ -172,16 +166,22 @@ int main(void) {
 		//Temperature = (int) ((u16AdcValue / 1023) * 5 * 100);
 
 		// Display LCD
+		clr_LCD();
 		move_LCD(1, 1);
 		printf_LCD("Temperature:%d", Temperature);
-		move_LCD(2, 1);
+		if (*rx_data) {
+			//clr_LCD();
+			move_LCD(2, 1);
+			printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+
+		}
+		//move_LCD(2, 1);
 //		printf_LCD("Threshold:%d-%d", belowThreshold, aboveThreshold);
 
 		// Compare threshold
-		if (Temperature > aboveThreshold)
-		{
+		if (Temperature > aboveThreshold) {
 			// Hot temperature warning
-			PORT_WARNING |= (1<<HOT);
+			PORT_WARNING |= (1 << HOT);
 
 			// LED and Buzzer ON/OFF 400ms
 			PORT_LED_O |= (1 << BIT_LED_O);
@@ -191,13 +191,13 @@ int main(void) {
 			PORT_BUZ |= (1 << BIT_BUZ);   // Wait 400 milisecond
 			TMR_vDelay(400);
 		}
-		if(Temperature > belowThreshold && Temperature < aboveThreshold){
-				// Cool temperature warning
-				PORT_WARNING |= (1<<COOL);
-			}
+		if (Temperature > belowThreshold && Temperature < aboveThreshold) {
+			// Cool temperature warning
+			PORT_WARNING |= (1 << COOL);
+		}
 		if (Temperature < belowThreshold) {
 			// Cold temperature warning
-			PORT_WARNING |= (1<<COLD);
+			PORT_WARNING |= (1 << COLD);
 			PORT_LED_O |= (1 << BIT_LED_O);
 			PORT_BUZ &= ~(1 << BIT_BUZ);   // Wait 700 milisecond
 			TMR_vDelay(700);
@@ -213,20 +213,17 @@ int main(void) {
 	}
 }
 
-void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength)
-{
-    for (int i = 0; i < bufferLength; i++)
-    {
-        rxBuffer[i] = USART0_vReceiveByte();
-    }
-    USART0_Flush();
+void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength) {
+	for (int i = 0; i < bufferLength; i++) {
+		rxBuffer[i] = USART0_vReceiveByte();
+	}
+	USART0_Flush();
 }
 
-void USART0_Flush(void)
-{
-    unsigned char dummy;
-    while (UCSR0A & (1 << RXC))
-        dummy = UDR0;
+void USART0_Flush(void) {
+	unsigned char dummy;
+	while (UCSR0A & (1 << RXC))
+		dummy = UDR0;
 }
 // USART recieve Threshold from NodeMCU
 //ISR(USART0_RX_vect){
@@ -242,14 +239,14 @@ void USART0_Flush(void)
 ////	}
 //	USART0_vReceiveStr
 //}
-ISR(USART0_RX_vect)
-{
-    // rx_data = UDR0;
-    USART0_vReceiveStr(rx_data, 2);
-    if (*rx_data)
-    {
-        move_LCD(2, 1);
-        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
-
-    }
+ISR(USART0_RX_vect) {
+	// rx_data = UDR0;
+	USART0_vReceiveStr(rx_data, 2);
+//    if (*rx_data)
+//    {
+//    	//clr_LCD();
+//        move_LCD(2, 1);
+//        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+//
+//    }
 }
