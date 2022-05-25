@@ -1,4 +1,3 @@
- 
 /*************************************************************
   Download latest Blynk library here:
     https://github.com/blynkkk/blynk-library/releases/latest
@@ -56,8 +55,8 @@ char auth[] = "QmZ0ozni5rHRDzknAr6cT6kGkhPQRmm8";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "275/18";
-char pass[] = "11223344";
+char ssid[] = "HCMUS-VLDT-SV";
+char pass[] = "svvldt38300595";
 int aboveThres;
 int belowThres;
 uint8_t u8aboveThres, u8belowThres;
@@ -90,14 +89,15 @@ void loop()
   Serial.println(belowThres);
 
   //Recieve Current Tempurature from ATMega
-  if (Serial.available()>0)
-  {
-    Temp = Serial.read();
-  }
-   int testtemp = 0;
-   testtemp = Temp;
+//  if (Serial.available()>0)
+//  {
+//    Temp = Serial.read();
+//  }
+//   int testtemp = 0;
+//   testtemp = Temp;
+Temp = 20;
   // Transmit Current Tempurature to Blynk
-  Blynk.virtualWrite(V3, testtemp);
+  Blynk.virtualWrite(V3, Temp);
   
   //Compare Curren Tempurature with Threshold
   if (Temp > aboveThres){
@@ -120,8 +120,8 @@ void loop()
 
     if(Temp < belowThres){
     Hot = 0;
-    Cold = 0;
-    Cool = 1;
+    Cold = 1;
+    Cool = 0;
     Blynk.virtualWrite(V4, Hot);
     Blynk.virtualWrite(V5, Cold);
     Blynk.virtualWrite(V6, Cool);
