@@ -35,7 +35,7 @@
  *************************************************************/
 
 /* Comment this out to disable prints and save space */
-#define BLYNK_PRINT Serial
+// #define BLYNK_PRINT Serial
 
 /* Fill-in your Template ID (only if using Blynk.Cloud) */
 //#define BLYNK_TEMPLATE_ID   "YourTemplateID"
@@ -46,7 +46,7 @@
 
 #include <ESP8266WiFi.h>
 //#include <Blynk.h>
-#include <BlynkSimpleEsp8266.h> 
+#include <BlynkSimpleEsp8266.h>
 //#include <BlynkEdgent.h>
 
 // You should get Auth Token in the Blynk App.
@@ -57,10 +57,15 @@ char auth[] = "QmZ0ozni5rHRDzknAr6cT6kGkhPQRmm8";
 // Set password to "" for open networks.
 char ssid[] = "HCMUS-VLDT-SV";
 char pass[] = "svvldt38300595";
-int aboveThres;
-int belowThres;
-uint8_t u8aboveThres, u8belowThres;
-int Hot, Cool, Cold, Temp;
+//int aboveThres;
+//int belowThres;
+//uint8_t aboveThres;
+//uint8_t belowThres = 15;
+uint8_t thershold_buffer[2] = {0};
+int Hot = 0; 
+int Cool = 0; 
+int Cold = 0;
+int Temp = 0;
 void setup()
 {
   // Debug console
@@ -74,33 +79,33 @@ void setup()
   Blynk.syncVirtual(V2);
 }
 BLYNK_WRITE(V1) {
-  aboveThres = param.asInt(); // Truyen tu Blynk xuong
+  thershold_buffer[0] = param.asInt(); // Truyen tu Blynk xuong
 }
 BLYNK_WRITE(V2) {
-  belowThres = param.asInt(); // Truyen tu Blynk xuong
+  thershold_buffer[1] = param.asInt(); //below
 }
 
 void loop()
 {
   Blynk.run();
 
- //Transmit Threshold from nodeMCU to ATMega
-  Serial.println(aboveThres);
-  Serial.println(belowThres);
+  //Transmit Threshold from nodeMCU to ATMega
+  //Serial.println(aboveThres);
+  Serial.write(thershold_buffer,2);
 
   //Recieve Current Tempurature from ATMega
-//  if (Serial.available()>0)
-//  {
-//    Temp = Serial.read();
-//  }
-//   int testtemp = 0;
-//   testtemp = Temp;
-Temp = 20;
+    if (Serial.available())
+    {
+      Temp = Serial.read();
+    }
+  //   int testtemp = 0;
+  //   testtemp = Temp;
+//  Temp = 20;
   // Transmit Current Tempurature to Blynk
   Blynk.virtualWrite(V3, Temp);
-  
+
   //Compare Curren Tempurature with Threshold
-  if (Temp > aboveThres){
+  if (Temp > thershold_buffer[0]) {
     Hot = 1;
     Cold = 0;
     Cool = 0;
@@ -108,7 +113,7 @@ Temp = 20;
     Blynk.virtualWrite(V5, Cold);
     Blynk.virtualWrite(V6, Cool);
   }
-   if (belowThres < Temp &&  Temp < aboveThres) {
+  if (thershold_buffer[1] < Temp &&  Temp < thershold_buffer[0]) {
     Hot = 0;
     Cold = 0;
     Cool = 1;
@@ -116,9 +121,7 @@ Temp = 20;
     Blynk.virtualWrite(V5, Cold);
     Blynk.virtualWrite(V6, Cool);
   }
-  
-
-    if(Temp < belowThres){
+  if (Temp < thershold_buffer[1]) {
     Hot = 0;
     Cold = 1;
     Cool = 0;
@@ -126,5 +129,5 @@ Temp = 20;
     Blynk.virtualWrite(V5, Cold);
     Blynk.virtualWrite(V6, Cool);
   }
-   
+
 }

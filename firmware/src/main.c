@@ -25,11 +25,6 @@
 #define DDR_BUZ        DDRB
 #define BIT_BUZ        7
 
-// Output Port pin LED_O
-#define PORT_LED_O         PORTB
-#define DDR_LED_O          DDRB
-#define BIT_LED_O          6
-
 // Output Port Warning Led
 #define PORT_WARNING 	PORTE
 #define DDR_WARNING		DDRE
@@ -40,7 +35,10 @@
 #define USART0_BAUD         115200ul
 #define USART0_UBBR_VALUE   ((F_CPU/(USART0_BAUD<<4))-1)
 
+uint8_t rx_data[2]= {0};
 
+void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength);
+void USART0_Flush(void);
 
 void Init_IO() {
 	// LED & Buzzer
@@ -116,30 +114,36 @@ void USART0_vInit(void)
 	UCSR0B = (1<<RXEN)|(1<<TXEN)|(1<<RXCIE);
 }
 
-void USART_tx(uint8_t temp){	// Transmit data to NodeMCU
-	while(bit_is_clear(UCSR0A,UDRE0)){};
 
-	UDR0 = temp;
-}
-uint8_t USART_rx()
+void USART0_vSendByte(uint8_t u8Data)
 {
-	// Wait until a byte has been received
-	while((UCSR0A&(1<<RXC0)) == 0)
-	{
-		;
-	}
-
-	// Return received data
-	return UDR0;
+    // Wait if a byte is being transmitted
+    while ((UCSR0A & (1 << UDRE0)) == 0)
+    {
+        ;
+    }
+    // Transmit data
+    UDR0 = u8Data;
 }
 
-int aboveThreshold = 35;
-int belowThreshold = 20;
+uint8_t USART0_vReceiveByte(void)
+{
+    // Wait until a byte has been received
+    while ((UCSR0A & (1 << RXC0)) == 0)
+    {
+        ;
+    }
+    // Return received data
+    return UDR0;
+}
 
+uint8_t aboveThreshold = 35;
+uint8_t belowThreshold = 0;
+char checkData = 0;
 
 int main(void) {
 	//uint16_t u16AdcValue;
-	int Temperature = 25;
+	int Temperature = 22;
 	// Initialise Interrupt
 	// Init_Interrupt();
 	sei();
@@ -171,10 +175,11 @@ int main(void) {
 		move_LCD(1, 1);
 		printf_LCD("Temperature:%d", Temperature);
 		move_LCD(2, 1);
-		printf_LCD("Threshold:%d-%d", belowThreshold, aboveThreshold);
+//		printf_LCD("Threshold:%d-%d", belowThreshold, aboveThreshold);
 
 		// Compare threshold
-		if (Temperature > aboveThreshold) {
+		if (Temperature > aboveThreshold)
+		{
 			// Hot temperature warning
 			PORT_WARNING |= (1<<HOT);
 
@@ -202,23 +207,49 @@ int main(void) {
 		}
 
 		// USART transmits current temperature to NodeMCU
-		USART_tx(Temperature);
+		USART0_vSendByte(Temperature);
 		// Wait 1 second
 		TMR_vDelay(1000);
-
-//		USART_tx(belowThreshold);
-//		TMR_vDelay(1000);
-//		USART_tx(aboveThreshold);
-//		TMR_vDelay(1000);
 	}
 }
 
+void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength)
+{
+    for (int i = 0; i < bufferLength; i++)
+    {
+        rxBuffer[i] = USART0_vReceiveByte();
+    }
+    USART0_Flush();
+}
+
+void USART0_Flush(void)
+{
+    unsigned char dummy;
+    while (UCSR0A & (1 << RXC))
+        dummy = UDR0;
+}
 // USART recieve Threshold from NodeMCU
 //ISR(USART0_RX_vect){
-//	uint8_t thr = USART_rx();
-//	if(thr){
-//		aboveThreshold = thr;
-//	}else{
-//		belowThreshold = thr;
-//	}
+//	//if(checkData){
+//		//belowThreshold = USART_rx();
+////		move_LCD(2, 1);
+////		printf_LCD("Threshold:%d", belowThreshold);
+//
+////		checkData = 0;
+////	}else{
+////		aboveThreshold = USART_rx();
+////		checkData++;
+////	}
+//	USART0_vReceiveStr
 //}
+ISR(USART0_RX_vect)
+{
+    // rx_data = UDR0;
+    USART0_vReceiveStr(rx_data, 2);
+    if (*rx_data)
+    {
+        move_LCD(2, 1);
+        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+
+    }
+}
