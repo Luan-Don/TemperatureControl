@@ -5,7 +5,6 @@
  *      Author: AnhThu
  */
 
-// ADC Example
 #include <stdint.h>
 #include <stdio.h>
 #include <avr/io.h>
@@ -15,6 +14,7 @@
 #include "myLCD.h"
 
 #define F_CPU 7372800UL
+
 // Output Port pin LED_O
 #define PORT_LED_O      PORTB
 #define DDR_LED_O       DDRB
@@ -31,26 +31,146 @@
 #define HOT				1
 #define COLD			2
 #define COOL			3
+
 // Define baud rate
 #define USART0_BAUD         115200ul
 #define USART0_UBBR_VALUE   ((F_CPU/(USART0_BAUD<<4))-1)
 
-uint8_t rx_data[2] = { 0 };
+//Declare global variables
+uint8_t rx_data[2] = {0};
+uint8_t aboveThreshold = 35;
+uint8_t belowThreshold = 0;
 
+//User-defined Functions
+void Init_IO();
+void TMR_vInit(void);
+void TMR_vDelay(uint16_t u16DelayMs);
+void ADC_vInit(void);
+uint16_t ADC_u16GetSample(void);
+void USART0_vInit(void);
+void USART0_vSendByte(uint8_t u8Data);
+uint8_t USART0_vReceiveByte(void);
 void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength);
 void USART0_Flush(void);
 
-void Init_IO() {
+int main(void)
+{
+	//uint16_t u16AdcValue;
+	int Temperature = 22;
+
+	// Initialise Interrupt
+	// Init_Interrupt();
+
+	//Enable Interrupt
+	sei();
+
+	// Initialise IO
+	Init_IO();
+
+	// Initialise timer
+	TMR_vInit();
+
+	// Initialise ADC
+	//ADC_vInit();
+
+	// Initialise LCD
+	init_LCD();
+
+	// Initialise USART
+	USART0_vInit();
+
+	clr_LCD();
+
+
+	// Repeat indefinitely
+	for (;;)
+	{
+		// Retrieve a sample
+		//u16AdcValue = ADC_u16GetSample();
+
+		// Calculate voltage
+		//Temperature = (int) ((u16AdcValue / 1023) * 5 * 100);
+
+		// Display LCD
+		clr_LCD();
+		move_LCD(1, 1);
+		printf_LCD("Temperature:%d", Temperature);
+		if (*rx_data)
+		{
+			move_LCD(2, 1);
+			printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+
+		}
+
+		// Compare threshold
+		if (Temperature > aboveThreshold)
+		{
+			// Hot temperature warning
+			PORT_WARNING |= (1 << HOT);
+
+			// LED and Buzzer ON/OFF 400ms
+			PORT_LED_O |= (1 << BIT_LED_O);
+			PORT_BUZ &= ~(1 << BIT_BUZ);
+			// Wait 400 milisecond
+			TMR_vDelay(400);
+			PORT_LED_O &= ~(1 << BIT_LED_O);
+			PORT_BUZ |= (1 << BIT_BUZ);
+			// Wait 400 milisecond
+			TMR_vDelay(400);
+		}
+		if (Temperature > belowThreshold && Temperature < aboveThreshold)
+		{
+			// Cool temperature warning
+			PORT_WARNING |= (1 << COOL);
+		}
+		if (Temperature < belowThreshold)
+		{
+			// Cold temperature warning
+			PORT_WARNING |= (1 << COLD);
+
+			// LED and Buzzer ON/OFF 700ms
+			PORT_LED_O |= (1 << BIT_LED_O);
+			PORT_BUZ &= ~(1 << BIT_BUZ);
+			// Wait 700 milisecond
+			TMR_vDelay(700);
+			PORT_LED_O &= ~(1 << BIT_LED_O);
+			PORT_BUZ |= (1 << BIT_BUZ);
+			// Wait 700 milisecond
+			TMR_vDelay(700);
+		}
+
+		// USART transmits current temperature to NodeMCU
+		USART0_vSendByte(Temperature);
+		// Wait 1 second
+		TMR_vDelay(1000);
+	}
+}
+
+ISR(USART0_RX_vect)
+{
+	USART0_vReceiveStr(rx_data, 2);
+//    if (*rx_data)
+//    {
+//        move_LCD(2, 1);
+//        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+//
+//    }
+}
+
+void Init_IO()
+{
 	// LED & Buzzer
 	DDR_LED_O |= (1 << BIT_LED_O);
 	DDR_BUZ |= (1 << BIT_BUZ);
 	PORT_BUZ |= (1 << BIT_BUZ);
+
 	// LED warning
 	DDR_WARNING |= (1 << HOT) | (1 << COLD) | (1 << COOL);
 
 }
 
-void TMR_vInit(void) {
+void TMR_vInit(void)
+{
 	/* Start timer 1 with clock prescaler CLK/1024 */
 	/* Resolution is 139 us */
 	/* Maximum time is 9.1 s */
@@ -61,7 +181,8 @@ void TMR_vInit(void) {
 			| (1 << CS12) | (0 << CS11) | (1 << CS10);
 }
 
-void TMR_vDelay(uint16_t u16DelayMs) {
+void TMR_vDelay(uint16_t u16DelayMs)
+{
 	// Calculate and set delay
 	TCNT1 = (uint16_t) (0x10000 - ((F_CPU / 1024) * u16DelayMs) / 1000);
 
@@ -69,12 +190,14 @@ void TMR_vDelay(uint16_t u16DelayMs) {
 	TIFR = (1 << TOV1);
 
 	// Wait until timer overflow flag is set
-	while ((TIFR & (1 << TOV1)) == 0) {
+	while ((TIFR & (1 << TOV1)) == 0)
+	{
 		;
 	}
 }
 
-void ADC_vInit(void) {
+void ADC_vInit(void)
+{
 	/*
 	 Select AVCC as reference with external capacitor at AREF pin
 	 ADC1 as the single-ended input channel with 1x gain
@@ -89,11 +212,13 @@ void ADC_vInit(void) {
 			| (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
-uint16_t ADC_u16GetSample(void) {
+uint16_t ADC_u16GetSample(void)
+{
 	// Start conversion
 	ADCSRA |= (1 << ADSC);
 	// Wait until conversion is finished... 13 ADC clock cycles
-	while (ADCSRA & (1 << ADSC)) {
+	while (ADCSRA & (1 << ADSC))
+	{
 		;
 	}
 
@@ -101,7 +226,8 @@ uint16_t ADC_u16GetSample(void) {
 	return ADC;
 }
 
-void USART0_vInit(void) {
+void USART0_vInit(void)
+{
 	// Set baud rate
 	UBRR0H = (uint8_t) (USART0_UBBR_VALUE >> 8);
 	UBRR0L = (uint8_t) USART0_UBBR_VALUE;
@@ -113,140 +239,42 @@ void USART0_vInit(void) {
 	UCSR0B = (1 << RXEN) | (1 << TXEN) | (1 << RXCIE);
 }
 
-void USART0_vSendByte(uint8_t u8Data) {
+void USART0_vSendByte(uint8_t u8Data)
+{
 	// Wait if a byte is being transmitted
-	while ((UCSR0A & (1 << UDRE0)) == 0) {
+	while ((UCSR0A & (1 << UDRE0)) == 0)
+	{
 		;
 	}
 	// Transmit data
 	UDR0 = u8Data;
 }
 
-uint8_t USART0_vReceiveByte(void) {
+uint8_t USART0_vReceiveByte(void)
+{
 	// Wait until a byte has been received
-	while ((UCSR0A & (1 << RXC0)) == 0) {
+	while ((UCSR0A & (1 << RXC0)) == 0)
+	{
 		;
 	}
 	// Return received data
 	return UDR0;
 }
 
-uint8_t aboveThreshold = 35;
-uint8_t belowThreshold = 0;
-char checkData = 0;
-
-int main(void) {
-	//uint16_t u16AdcValue;
-	int Temperature = 22;
-	// Initialise Interrupt
-	// Init_Interrupt();
-	sei();
-
-	// Initialise IO
-	Init_IO();
-
-	// Initialise timer
-	TMR_vInit();
-
-	// Initialise ADC
-	//ADC_vInit();
-
-	// Initialise LCD
-	init_LCD();
-	clr_LCD();
-
-	// Initialise USART
-	USART0_vInit();
-	// Repeat indefinitely
-	for (;;) {
-		// Retrieve a sample
-		//u16AdcValue = ADC_u16GetSample();
-
-		// Calculate voltage
-		//Temperature = (int) ((u16AdcValue / 1023) * 5 * 100);
-
-		// Display LCD
-		clr_LCD();
-		move_LCD(1, 1);
-		printf_LCD("Temperature:%d", Temperature);
-		if (*rx_data) {
-			//clr_LCD();
-			move_LCD(2, 1);
-			printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
-
-		}
-		//move_LCD(2, 1);
-//		printf_LCD("Threshold:%d-%d", belowThreshold, aboveThreshold);
-
-		// Compare threshold
-		if (Temperature > aboveThreshold) {
-			// Hot temperature warning
-			PORT_WARNING |= (1 << HOT);
-
-			// LED and Buzzer ON/OFF 400ms
-			PORT_LED_O |= (1 << BIT_LED_O);
-			PORT_BUZ &= ~(1 << BIT_BUZ);   // Wait 400 milisecond
-			TMR_vDelay(400);
-			PORT_LED_O &= ~(1 << BIT_LED_O);
-			PORT_BUZ |= (1 << BIT_BUZ);   // Wait 400 milisecond
-			TMR_vDelay(400);
-		}
-		if (Temperature > belowThreshold && Temperature < aboveThreshold) {
-			// Cool temperature warning
-			PORT_WARNING |= (1 << COOL);
-		}
-		if (Temperature < belowThreshold) {
-			// Cold temperature warning
-			PORT_WARNING |= (1 << COLD);
-			PORT_LED_O |= (1 << BIT_LED_O);
-			PORT_BUZ &= ~(1 << BIT_BUZ);   // Wait 700 milisecond
-			TMR_vDelay(700);
-			PORT_LED_O &= ~(1 << BIT_LED_O);
-			PORT_BUZ |= (1 << BIT_BUZ);   // Wait 700 milisecond
-			TMR_vDelay(700);
-		}
-
-		// USART transmits current temperature to NodeMCU
-		USART0_vSendByte(Temperature);
-		// Wait 1 second
-		TMR_vDelay(1000);
-	}
-}
-
-void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength) {
-	for (int i = 0; i < bufferLength; i++) {
+void USART0_vReceiveStr(uint8_t *rxBuffer, uint8_t bufferLength)
+{
+	for (int i = 0; i < bufferLength; i++)
+	{
 		rxBuffer[i] = USART0_vReceiveByte();
 	}
 	USART0_Flush();
 }
 
-void USART0_Flush(void) {
+void USART0_Flush(void)
+{
 	unsigned char dummy;
 	while (UCSR0A & (1 << RXC))
 		dummy = UDR0;
 }
-// USART recieve Threshold from NodeMCU
-//ISR(USART0_RX_vect){
-//	//if(checkData){
-//		//belowThreshold = USART_rx();
-////		move_LCD(2, 1);
-////		printf_LCD("Threshold:%d", belowThreshold);
-//
-////		checkData = 0;
-////	}else{
-////		aboveThreshold = USART_rx();
-////		checkData++;
-////	}
-//	USART0_vReceiveStr
-//}
-ISR(USART0_RX_vect) {
-	// rx_data = UDR0;
-	USART0_vReceiveStr(rx_data, 2);
-//    if (*rx_data)
-//    {
-//    	//clr_LCD();
-//        move_LCD(2, 1);
-//        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
-//
-//    }
-}
+
+

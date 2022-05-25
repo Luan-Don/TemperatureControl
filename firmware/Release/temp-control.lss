@@ -7,7 +7,7 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   1 .text         00000a56  00000000  00000000  00000094  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000015  0080011c  0080011c  00000b06  2**0
+  2 .bss          00000014  0080011c  0080011c  00000b06  2**0
                   ALLOC
   3 .comment      0000005c  00000000  00000000  00000b06  2**0
                   CONTENTS, READONLY
@@ -94,10 +94,10 @@ Disassembly of section .text:
   ba:	1d 92       	st	X+, r1
 
 000000bc <.do_clear_bss_start>:
-  bc:	a1 33       	cpi	r26, 0x31	; 49
+  bc:	a0 33       	cpi	r26, 0x30	; 48
   be:	b2 07       	cpc	r27, r18
   c0:	e1 f7       	brne	.-8      	; 0xba <.do_clear_bss_loop>
-  c2:	0e 94 a5 00 	call	0x14a	; 0x14a <main>
+  c2:	0e 94 a1 00 	call	0x142	; 0x142 <main>
   c6:	0c 94 29 05 	jmp	0xa52	; 0xa52 <_exit>
 
 000000ca <__bad_interrupt>:
@@ -171,104 +171,104 @@ Disassembly of section .text:
  13e:	8c b9       	out	0x0c, r24	; 12
  140:	08 95       	ret
 
-00000142 <USART0_vReceiveByte>:
- 142:	5f 9b       	sbis	0x0b, 7	; 11
- 144:	fe cf       	rjmp	.-4      	; 0x142 <USART0_vReceiveByte>
- 146:	8c b1       	in	r24, 0x0c	; 12
- 148:	08 95       	ret
-
-0000014a <main>:
- 14a:	78 94       	sei
- 14c:	0e 94 67 00 	call	0xce	; 0xce <Init_IO>
- 150:	0e 94 6e 00 	call	0xdc	; 0xdc <TMR_vInit>
- 154:	0e 94 a2 01 	call	0x344	; 0x344 <init_LCD>
- 158:	0e 94 cf 01 	call	0x39e	; 0x39e <clr_LCD>
- 15c:	0e 94 93 00 	call	0x126	; 0x126 <USART0_vInit>
- 160:	86 e1       	ldi	r24, 0x16	; 22
- 162:	f8 2e       	mov	r15, r24
- 164:	c1 e0       	ldi	r28, 0x01	; 1
- 166:	d1 e0       	ldi	r29, 0x01	; 1
- 168:	00 e1       	ldi	r16, 0x10	; 16
- 16a:	11 e0       	ldi	r17, 0x01	; 1
- 16c:	0e 94 cf 01 	call	0x39e	; 0x39e <clr_LCD>
- 170:	61 e0       	ldi	r22, 0x01	; 1
- 172:	81 e0       	ldi	r24, 0x01	; 1
- 174:	0e 94 c4 01 	call	0x388	; 0x388 <move_LCD>
- 178:	1f 92       	push	r1
- 17a:	ff 92       	push	r15
- 17c:	df 93       	push	r29
- 17e:	cf 93       	push	r28
- 180:	0e 94 ed 01 	call	0x3da	; 0x3da <printf_LCD>
- 184:	0f 90       	pop	r0
- 186:	0f 90       	pop	r0
- 188:	0f 90       	pop	r0
- 18a:	0f 90       	pop	r0
- 18c:	80 91 1e 01 	lds	r24, 0x011E	; 0x80011e <rx_data>
- 190:	88 23       	and	r24, r24
- 192:	b1 f0       	breq	.+44     	; 0x1c0 <main+0x76>
- 194:	61 e0       	ldi	r22, 0x01	; 1
- 196:	82 e0       	ldi	r24, 0x02	; 2
- 198:	0e 94 c4 01 	call	0x388	; 0x388 <move_LCD>
- 19c:	80 91 1e 01 	lds	r24, 0x011E	; 0x80011e <rx_data>
+00000142 <main>:
+ 142:	78 94       	sei
+ 144:	0e 94 67 00 	call	0xce	; 0xce <Init_IO>
+ 148:	0e 94 6e 00 	call	0xdc	; 0xdc <TMR_vInit>
+ 14c:	0e 94 a2 01 	call	0x344	; 0x344 <init_LCD>
+ 150:	0e 94 cf 01 	call	0x39e	; 0x39e <clr_LCD>
+ 154:	0e 94 93 00 	call	0x126	; 0x126 <USART0_vInit>
+ 158:	86 e1       	ldi	r24, 0x16	; 22
+ 15a:	f8 2e       	mov	r15, r24
+ 15c:	c1 e0       	ldi	r28, 0x01	; 1
+ 15e:	d1 e0       	ldi	r29, 0x01	; 1
+ 160:	00 e1       	ldi	r16, 0x10	; 16
+ 162:	11 e0       	ldi	r17, 0x01	; 1
+ 164:	0e 94 cf 01 	call	0x39e	; 0x39e <clr_LCD>
+ 168:	61 e0       	ldi	r22, 0x01	; 1
+ 16a:	81 e0       	ldi	r24, 0x01	; 1
+ 16c:	0e 94 c4 01 	call	0x388	; 0x388 <move_LCD>
+ 170:	1f 92       	push	r1
+ 172:	ff 92       	push	r15
+ 174:	df 93       	push	r29
+ 176:	cf 93       	push	r28
+ 178:	0e 94 ed 01 	call	0x3da	; 0x3da <printf_LCD>
+ 17c:	0f 90       	pop	r0
+ 17e:	0f 90       	pop	r0
+ 180:	0f 90       	pop	r0
+ 182:	0f 90       	pop	r0
+ 184:	80 91 1d 01 	lds	r24, 0x011D	; 0x80011d <rx_data>
+ 188:	88 23       	and	r24, r24
+ 18a:	b1 f0       	breq	.+44     	; 0x1b8 <main+0x76>
+ 18c:	61 e0       	ldi	r22, 0x01	; 1
+ 18e:	82 e0       	ldi	r24, 0x02	; 2
+ 190:	0e 94 c4 01 	call	0x388	; 0x388 <move_LCD>
+ 194:	80 91 1d 01 	lds	r24, 0x011D	; 0x80011d <rx_data>
+ 198:	1f 92       	push	r1
+ 19a:	8f 93       	push	r24
+ 19c:	80 91 1e 01 	lds	r24, 0x011E	; 0x80011e <rx_data+0x1>
  1a0:	1f 92       	push	r1
  1a2:	8f 93       	push	r24
- 1a4:	80 91 1f 01 	lds	r24, 0x011F	; 0x80011f <rx_data+0x1>
- 1a8:	1f 92       	push	r1
- 1aa:	8f 93       	push	r24
- 1ac:	1f 93       	push	r17
- 1ae:	0f 93       	push	r16
- 1b0:	0e 94 ed 01 	call	0x3da	; 0x3da <printf_LCD>
+ 1a4:	1f 93       	push	r17
+ 1a6:	0f 93       	push	r16
+ 1a8:	0e 94 ed 01 	call	0x3da	; 0x3da <printf_LCD>
+ 1ac:	0f 90       	pop	r0
+ 1ae:	0f 90       	pop	r0
+ 1b0:	0f 90       	pop	r0
+ 1b2:	0f 90       	pop	r0
  1b4:	0f 90       	pop	r0
  1b6:	0f 90       	pop	r0
- 1b8:	0f 90       	pop	r0
- 1ba:	0f 90       	pop	r0
- 1bc:	0f 90       	pop	r0
- 1be:	0f 90       	pop	r0
- 1c0:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
- 1c4:	90 e0       	ldi	r25, 0x00	; 0
- 1c6:	46 97       	sbiw	r24, 0x16	; 22
- 1c8:	6c f4       	brge	.+26     	; 0x1e4 <main+0x9a>
- 1ca:	19 9a       	sbi	0x03, 1	; 3
- 1cc:	c6 9a       	sbi	0x18, 6	; 24
- 1ce:	c7 98       	cbi	0x18, 7	; 24
- 1d0:	80 e9       	ldi	r24, 0x90	; 144
- 1d2:	91 e0       	ldi	r25, 0x01	; 1
- 1d4:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
- 1d8:	c6 98       	cbi	0x18, 6	; 24
- 1da:	c7 9a       	sbi	0x18, 7	; 24
- 1dc:	80 e9       	ldi	r24, 0x90	; 144
- 1de:	91 e0       	ldi	r25, 0x01	; 1
- 1e0:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
- 1e4:	80 91 1d 01 	lds	r24, 0x011D	; 0x80011d <belowThreshold>
- 1e8:	90 e0       	ldi	r25, 0x00	; 0
- 1ea:	46 97       	sbiw	r24, 0x16	; 22
- 1ec:	34 f4       	brge	.+12     	; 0x1fa <main+0xb0>
- 1ee:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
- 1f2:	90 e0       	ldi	r25, 0x00	; 0
- 1f4:	47 97       	sbiw	r24, 0x17	; 23
- 1f6:	0c f0       	brlt	.+2      	; 0x1fa <main+0xb0>
- 1f8:	1b 9a       	sbi	0x03, 3	; 3
- 1fa:	80 91 1d 01 	lds	r24, 0x011D	; 0x80011d <belowThreshold>
- 1fe:	90 e0       	ldi	r25, 0x00	; 0
- 200:	47 97       	sbiw	r24, 0x17	; 23
- 202:	6c f0       	brlt	.+26     	; 0x21e <main+0xd4>
- 204:	1a 9a       	sbi	0x03, 2	; 3
- 206:	c6 9a       	sbi	0x18, 6	; 24
- 208:	c7 98       	cbi	0x18, 7	; 24
- 20a:	8c eb       	ldi	r24, 0xBC	; 188
- 20c:	92 e0       	ldi	r25, 0x02	; 2
- 20e:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
- 212:	c6 98       	cbi	0x18, 6	; 24
- 214:	c7 9a       	sbi	0x18, 7	; 24
- 216:	8c eb       	ldi	r24, 0xBC	; 188
- 218:	92 e0       	ldi	r25, 0x02	; 2
- 21a:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
- 21e:	86 e1       	ldi	r24, 0x16	; 22
- 220:	0e 94 9d 00 	call	0x13a	; 0x13a <USART0_vSendByte>
- 224:	88 ee       	ldi	r24, 0xE8	; 232
- 226:	93 e0       	ldi	r25, 0x03	; 3
- 228:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
- 22c:	9f cf       	rjmp	.-194    	; 0x16c <main+0x22>
+ 1b8:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
+ 1bc:	90 e0       	ldi	r25, 0x00	; 0
+ 1be:	46 97       	sbiw	r24, 0x16	; 22
+ 1c0:	6c f4       	brge	.+26     	; 0x1dc <main+0x9a>
+ 1c2:	19 9a       	sbi	0x03, 1	; 3
+ 1c4:	c6 9a       	sbi	0x18, 6	; 24
+ 1c6:	c7 98       	cbi	0x18, 7	; 24
+ 1c8:	80 e9       	ldi	r24, 0x90	; 144
+ 1ca:	91 e0       	ldi	r25, 0x01	; 1
+ 1cc:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
+ 1d0:	c6 98       	cbi	0x18, 6	; 24
+ 1d2:	c7 9a       	sbi	0x18, 7	; 24
+ 1d4:	80 e9       	ldi	r24, 0x90	; 144
+ 1d6:	91 e0       	ldi	r25, 0x01	; 1
+ 1d8:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
+ 1dc:	80 91 1c 01 	lds	r24, 0x011C	; 0x80011c <__data_end>
+ 1e0:	90 e0       	ldi	r25, 0x00	; 0
+ 1e2:	46 97       	sbiw	r24, 0x16	; 22
+ 1e4:	34 f4       	brge	.+12     	; 0x1f2 <main+0xb0>
+ 1e6:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__DATA_REGION_ORIGIN__>
+ 1ea:	90 e0       	ldi	r25, 0x00	; 0
+ 1ec:	47 97       	sbiw	r24, 0x17	; 23
+ 1ee:	0c f0       	brlt	.+2      	; 0x1f2 <main+0xb0>
+ 1f0:	1b 9a       	sbi	0x03, 3	; 3
+ 1f2:	80 91 1c 01 	lds	r24, 0x011C	; 0x80011c <__data_end>
+ 1f6:	90 e0       	ldi	r25, 0x00	; 0
+ 1f8:	47 97       	sbiw	r24, 0x17	; 23
+ 1fa:	6c f0       	brlt	.+26     	; 0x216 <main+0xd4>
+ 1fc:	1a 9a       	sbi	0x03, 2	; 3
+ 1fe:	c6 9a       	sbi	0x18, 6	; 24
+ 200:	c7 98       	cbi	0x18, 7	; 24
+ 202:	8c eb       	ldi	r24, 0xBC	; 188
+ 204:	92 e0       	ldi	r25, 0x02	; 2
+ 206:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
+ 20a:	c6 98       	cbi	0x18, 6	; 24
+ 20c:	c7 9a       	sbi	0x18, 7	; 24
+ 20e:	8c eb       	ldi	r24, 0xBC	; 188
+ 210:	92 e0       	ldi	r25, 0x02	; 2
+ 212:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
+ 216:	86 e1       	ldi	r24, 0x16	; 22
+ 218:	0e 94 9d 00 	call	0x13a	; 0x13a <USART0_vSendByte>
+ 21c:	88 ee       	ldi	r24, 0xE8	; 232
+ 21e:	93 e0       	ldi	r25, 0x03	; 3
+ 220:	0e 94 72 00 	call	0xe4	; 0xe4 <TMR_vDelay>
+ 224:	9f cf       	rjmp	.-194    	; 0x164 <main+0x22>
+
+00000226 <USART0_vReceiveByte>:
+ 226:	5f 9b       	sbis	0x0b, 7	; 11
+ 228:	fe cf       	rjmp	.-4      	; 0x226 <USART0_vReceiveByte>
+ 22a:	8c b1       	in	r24, 0x0c	; 12
+ 22c:	08 95       	ret
 
 0000022e <USART0_Flush>:
  22e:	5f 9b       	sbis	0x0b, 7	; 11
@@ -294,7 +294,7 @@ Disassembly of section .text:
  252:	8c 17       	cp	r24, r28
  254:	9d 07       	cpc	r25, r29
  256:	34 f4       	brge	.+12     	; 0x264 <USART0_vReceiveStr+0x2c>
- 258:	0e 94 a1 00 	call	0x142	; 0x142 <USART0_vReceiveByte>
+ 258:	0e 94 13 01 	call	0x226	; 0x226 <USART0_vReceiveByte>
  25c:	f8 01       	movw	r30, r16
  25e:	81 93       	st	Z+, r24
  260:	8f 01       	movw	r16, r30
@@ -328,7 +328,7 @@ Disassembly of section .text:
  296:	ef 93       	push	r30
  298:	ff 93       	push	r31
  29a:	62 e0       	ldi	r22, 0x02	; 2
- 29c:	8e e1       	ldi	r24, 0x1E	; 30
+ 29c:	8d e1       	ldi	r24, 0x1D	; 29
  29e:	91 e0       	ldi	r25, 0x01	; 1
  2a0:	0e 94 1c 01 	call	0x238	; 0x238 <USART0_vReceiveStr>
  2a4:	ff 91       	pop	r31
@@ -504,10 +504,10 @@ Disassembly of section .text:
  3ee:	9f 01       	movw	r18, r30
  3f0:	61 e1       	ldi	r22, 0x11	; 17
  3f2:	70 e0       	ldi	r23, 0x00	; 0
- 3f4:	80 e2       	ldi	r24, 0x20	; 32
+ 3f4:	8f e1       	ldi	r24, 0x1F	; 31
  3f6:	91 e0       	ldi	r25, 0x01	; 1
  3f8:	0e 94 36 02 	call	0x46c	; 0x46c <vsnprintf>
- 3fc:	80 e2       	ldi	r24, 0x20	; 32
+ 3fc:	8f e1       	ldi	r24, 0x1F	; 31
  3fe:	91 e0       	ldi	r25, 0x01	; 1
  400:	0e 94 da 01 	call	0x3b4	; 0x3b4 <putStr_LCD>
  404:	df 91       	pop	r29
