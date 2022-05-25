@@ -31,56 +31,56 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 LSS += \
-LM35.lss \
+temp-control.lss \
 
 FLASH_IMAGE += \
-LM35.hex \
+temp-control.hex \
 
 EEPROM_IMAGE += \
-LM35.eep \
+temp-control.eep \
 
 SIZEDUMMY += \
 sizedummy \
 
 
 # All Target
-all: LM35.elf secondary-outputs
+all: temp-control.elf secondary-outputs
 
 # Tool invocations
-LM35.elf: $(OBJS) $(USER_OBJS)
+temp-control.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: AVR C Linker'
-	avr-gcc -Wl,-Map,LM35.map -Wl,-u,vfprintf -lprintf_flt -mmcu=atmega128 -o "LM35.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	avr-gcc -Wl,-Map,temp-control.map -mmcu=atmega128 -o "temp-control.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-LM35.lss: LM35.elf
+temp-control.lss: temp-control.elf
 	@echo 'Invoking: AVR Create Extended Listing'
-	-avr-objdump -h -S LM35.elf  >"LM35.lss"
+	-avr-objdump -h -S temp-control.elf  >"temp-control.lss"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-LM35.hex: LM35.elf
+temp-control.hex: temp-control.elf
 	@echo 'Create Flash image (ihex format)'
-	-avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex LM35.elf  "LM35.hex"
+	-avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex temp-control.elf  "temp-control.hex"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-LM35.eep: LM35.elf
+temp-control.eep: temp-control.elf
 	@echo 'Create eeprom image (ihex format)'
-	-avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0 -O ihex LM35.elf  "LM35.eep"
+	-avr-objcopy -j .eeprom --no-change-warnings --change-section-lma .eeprom=0 -O ihex temp-control.elf  "temp-control.eep"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-sizedummy: LM35.elf
+sizedummy: temp-control.elf
 	@echo 'Invoking: Print Size'
-	-avr-size --format=avr --mcu=atmega128 LM35.elf
+	-avr-size --format=avr --mcu=atmega128 temp-control.elf
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(FLASH_IMAGE)$(ELFS)$(OBJS)$(ASM_DEPS)$(EEPROM_IMAGE)$(S_DEPS)$(SIZEDUMMY)$(S_UPPER_DEPS)$(LSS)$(C_DEPS) LM35.elf
+	-$(RM) $(FLASH_IMAGE)$(ELFS)$(OBJS)$(ASM_DEPS)$(EEPROM_IMAGE)$(S_DEPS)$(SIZEDUMMY)$(S_UPPER_DEPS)$(LSS)$(C_DEPS) temp-control.elf
 	-@echo ' '
 
 secondary-outputs: $(LSS) $(FLASH_IMAGE) $(EEPROM_IMAGE) $(SIZEDUMMY)
