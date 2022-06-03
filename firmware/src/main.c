@@ -28,9 +28,9 @@
 // Output Port Warning Led
 #define PORT_WARNING 	PORTE
 #define DDR_WARNING		DDRE
-#define HOT				1
-#define COLD			2
-#define COOL			3
+#define HOT				2
+#define COLD			3
+#define COOL			4
 
 // Define baud rate
 #define USART0_BAUD         115200ul
@@ -55,11 +55,8 @@ void USART0_Flush(void);
 
 int main(void)
 {
-	//uint16_t u16AdcValue;
-	int Temperature = 22;
-
-	// Initialise Interrupt
-	// Init_Interrupt();
+	uint16_t u16AdcValue = 0;
+	int Temperature = 0;
 
 	//Enable Interrupt
 	sei();
@@ -71,25 +68,23 @@ int main(void)
 	TMR_vInit();
 
 	// Initialise ADC
-	//ADC_vInit();
+	ADC_vInit();
 
 	// Initialise LCD
 	init_LCD();
+	clr_LCD();
 
 	// Initialise USART
 	USART0_vInit();
-
-	clr_LCD();
-
 
 	// Repeat indefinitely
 	for (;;)
 	{
 		// Retrieve a sample
-		//u16AdcValue = ADC_u16GetSample();
+		u16AdcValue = ADC_u16GetSample();
 
 		// Calculate voltage
-		//Temperature = (int) ((u16AdcValue / 1023) * 5 * 100);
+		Temperature = ( u16AdcValue * 5 * 100 / 1023);
 
 		// Display LCD
 		clr_LCD();
@@ -99,7 +94,6 @@ int main(void)
 		{
 			move_LCD(2, 1);
 			printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
-
 		}
 
 		// Compare threshold
@@ -149,12 +143,6 @@ int main(void)
 ISR(USART0_RX_vect)
 {
 	USART0_vReceiveStr(rx_data, 2);
-//    if (*rx_data)
-//    {
-//        move_LCD(2, 1);
-//        printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
-//
-//    }
 }
 
 void Init_IO()
