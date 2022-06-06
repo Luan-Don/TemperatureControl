@@ -75,11 +75,16 @@ int main(void) {
 		if (*rx_data) {
 			move_LCD(2, 1);
 			printf_LCD("Thres:%d-%d", rx_data[1], rx_data[0]);
+			aboveThreshold = rx_data[0];
+			belowThreshold = rx_data[1];
 		}
+
 		// Compare threshold
 		if (Temperature > aboveThreshold) {
 			// Hot temperature warning
 			PORT_WARNING |= (1 << HOT);
+			PORT_WARNING &= ~(1 << COOL);
+			PORT_WARNING &= ~(1 << COLD);
 			// LED and Buzzer ON/OFF 400ms
 			PORT_LED_O |= (1 << BIT_LED_O);
 			PORT_BUZ &= ~(1 << BIT_BUZ);
@@ -93,10 +98,14 @@ int main(void) {
 		if (Temperature > belowThreshold && Temperature < aboveThreshold) {
 			// Cool temperature warning
 			PORT_WARNING |= (1 << COOL);
+			PORT_WARNING &= ~(1 << HOT);
+			PORT_WARNING &= ~(1 << COLD);
 		}
 		if (Temperature < belowThreshold) {
 			// Cold temperature warning
 			PORT_WARNING |= (1 << COLD);
+			PORT_WARNING &= ~(1 << HOT);
+			PORT_WARNING &= ~(1 << COOL);
 			// LED and Buzzer ON/OFF 700ms
 			PORT_LED_O |= (1 << BIT_LED_O);
 			PORT_BUZ &= ~(1 << BIT_BUZ);
